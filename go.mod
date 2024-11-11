@@ -1,4 +1,4 @@
-module main
+module go-stomp-ws
 
 go 1.23.2
 

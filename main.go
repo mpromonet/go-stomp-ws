@@ -12,7 +12,7 @@
 
 package main
 
-import "main/cmd"
+import "go-stomp-ws/cmd"
 
 func main() {
 	cmd.Execute()
