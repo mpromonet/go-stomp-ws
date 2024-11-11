@@ -105,10 +105,19 @@ func readFromWebSocket(conn *websocket.Conn, localConn *CustomConn) {
 		}
 		localConn.readBuffer <- message
 	}
-	conn.Close()
 }
 
-func processClientRequests(localConn *CustomConn, conn *websocket.Conn, ch chan client.Request) {
+func writeToWebSocket(conn *websocket.Conn, localConn *CustomConn) {
+	for {
+		answer, ok := <-localConn.writeBuffer
+		if !ok {
+			break
+		}
+		conn.WriteMessage(websocket.TextMessage, answer)
+	}
+}
+
+func processClientRequests(ch chan client.Request) {
 	for response := range ch {
 		switch response.Op {
 		case client.SubscribeOp:
@@ -123,13 +132,6 @@ func processClientRequests(localConn *CustomConn, conn *websocket.Conn, ch chan 
 				topic := tm.Find(destination)
 				topic.Enqueue(response.Frame)
 			}
-		}
-
-		select {
-		case answer := <-localConn.writeBuffer:
-			conn.WriteMessage(websocket.TextMessage, answer)
-		case <-time.After(time.Second):
-			log.Println("timeout waiting for data")
 		}
 	}
 }
@@ -147,7 +149,10 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	client.NewConn(&config, localConn, ch)
 
 	go readFromWebSocket(conn, localConn)
-	go processClientRequests(localConn, conn, ch)
+	go writeToWebSocket(conn, localConn)
+	processClientRequests(ch)
+	localConn.Close()
+	conn.Close()
 }
 
 func main() {
