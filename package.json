@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@stomp/stompjs": "^7.0.0",
+    "ws": "^8.18.0"
+  },
+  "type":"module",
+  "scripts": {
+    "start": "node wsstomp.js"
+  }
+}
